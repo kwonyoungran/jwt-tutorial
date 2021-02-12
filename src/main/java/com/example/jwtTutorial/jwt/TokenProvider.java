@@ -15,10 +15,8 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Component;
 
-import java.net.Authenticator;
 import java.security.Key;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.Collection;
 import java.util.Date;
 import java.util.stream.Collectors;
@@ -36,9 +34,9 @@ public class TokenProvider implements InitializingBean {
 
     public TokenProvider(
             @Value("${jwt.secret}") String secret,
-            @Value("${jwt.token-validity-in-seconds}") long tokenValidityInMilliseconds) {
+            @Value("${jwt.token-validity-in-seconds}") long tokenValidityInSeconds) {
         this.secret = secret;
-        this.tokenValidityInMilliseconds = tokenValidityInMilliseconds * 1000;
+        this.tokenValidityInMilliseconds = tokenValidityInSeconds * 1000;
     }
 
     @Override
@@ -74,8 +72,8 @@ public class TokenProvider implements InitializingBean {
 
         Collection<? extends GrantedAuthority> authorities =
                 Arrays.stream(claims.get(AUTHORITIES_KEY).toString().split(","))
-                .map(SimpleGrantedAuthority::new)
-                .collect(Collectors.toList());
+                        .map(SimpleGrantedAuthority::new)
+                        .collect(Collectors.toList());
 
         User principal = new User(claims.getSubject(), "", authorities);
 
@@ -88,12 +86,12 @@ public class TokenProvider implements InitializingBean {
             return true;
         } catch (io.jsonwebtoken.security.SecurityException | MalformedJwtException e) {
             logger.info("잘못된 JWT 서명입니다.");
-        }catch (ExpiredJwtException e) {
+        } catch (ExpiredJwtException e) {
             logger.info("만료된 JWT 토큰입니다.");
-        }catch (UnsupportedJwtException e) {
-            logger.info("지원된지 않는 JWT 토큰입니다.");
-        }catch (IllegalArgumentException e) {
-            logger.info("JWT 토큰이 잘못되었습니다");
+        } catch (UnsupportedJwtException e) {
+            logger.info("지원되지 않는 JWT 토큰입니다.");
+        } catch (IllegalArgumentException e) {
+            logger.info("JWT 토큰이 잘못되었습니다.");
         }
 
         return false;
